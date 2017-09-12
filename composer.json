@@ -1,0 +1,19 @@
+{
+    "name": "digitaldream/dbreader",
+    "description": "Database Reader",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Tuhin",
+            "email": "digitaldreams40@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "DbReader\\": "src/"
+        }
+    },
+    "minimum-stability": "stable",
+    "require": {
+    }
+}

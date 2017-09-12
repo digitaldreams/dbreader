@@ -185,26 +185,6 @@ class Table
     }
 
     /**
-     * Make final Model builder
-     * @return Model
-     */
-    public function makeModelBuilders()
-    {
-        $builder = null;
-        $columns = $this->columnClasses();
-        foreach ($columns as $column) {
-            if (empty($builder)) {
-                $builder = new Model($column);
-            } else {
-                $newBuilder = new Model($column);
-                $newBuilder->merge($builder);
-                $builder = $newBuilder;
-            }
-        }
-        return $builder;
-    }
-
-    /**
      * Make array of Column class instance
      * @return arrays
      */

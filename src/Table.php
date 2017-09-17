@@ -193,9 +193,47 @@ class Table
         $columns = [];
         foreach ($this->columns() as $name => $column) {
             $foreign = isset($this->relations[$name]) ? $this->relations[$name] : [];
-            $columns[] = new Column($column, $foreign,$this);
+            $columns[] = new Column($column, $foreign, $this);
         }
         return $columns;
+    }
+
+    /**
+     * @return array
+     */
+    protected function manualRelations()
+    {
+        $retArr = [];
+        $relations = Database::$manualRelations;
+        if (!empty($relations)) {
+            $retArr = array_filter($relations, function ($v, $k) {
+                if (substr_compare($k, $this->name(), 0, strlen($this->name())) === 0) {
+                    return true;
+                }
+            }, ARRAY_FILTER_USE_BOTH);
+        }
+        return $retArr;
+    }
+
+    protected function makeManualRelation()
+    {
+        $relArr = [];
+        $relations = $this->manualRelations();
+        foreach ($relations as $key => $value) {
+            $foreign = new \stdClass();
+            $fkKeys = explode(".", $key);
+            $fkValues = explode(".", $value);
+
+            if (count($fkKeys) < 2) {
+                continue;
+            }
+            $foreign->COLUMN_NAME = $fkKeys[1];
+            $foreign->REFERENCED_TABLE_NAME = $fkValues[0];
+            $foreign->REFERENCED_COLUMN_NAME = isset($fkValues[1]) ? $fkValues[1] : 'id';
+
+            $relArr[] = $foreign;
+        }
+        return $relArr;
     }
 
     /**

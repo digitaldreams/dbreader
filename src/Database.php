@@ -76,6 +76,19 @@ class Database
 
     protected $tables = [];
 
+    /**
+     * @var array
+     */
+    public static $manualRelations = [
+        // tables.foreign_column=>foreign_table.column
+    ];
+
+    /**
+     * @var array
+     */
+    public static $files = [
+        //'tables.column'
+    ];
 
     /**
      * All Relations
@@ -137,6 +150,18 @@ class Database
             return new Table($name);
         }
         throw new \Exception('Table ' . $name . ' you are trying to access is not exists');
+    }
+
+    /**
+     * @param array $settings
+     */
+    public static function settings(array $settings)
+    {
+        foreach ($settings as $prop => $value) {
+            if (property_exists(static::class, $prop)) {
+                static::${$prop} = $value;
+            }
+        }
     }
 
 

@@ -3,14 +3,22 @@ For some kind of automation tools we need to know database constraints like tabl
 ## Settings
 Set Database information on top of page. 
 ```php
-\DbReader\Database::$database = "YOUR_DATABASE_NAME";
-\DbReader\Database::$username = "YOUR_DATABASE_USERNAME";
-\DbReader\Database::$password = "YOUR_DATABSE_PASSWORD";
-\DbReader\Database::$port = "YOUR_DATABSE_PORT"; // Default to 3306
-\DbReader\Database::$host = "YOUR_DATABSE_PORT"; // Default to 127.0.0.1
-\DbReader\Database::$connection = "YOUR_DATABSE_ENGINE"; // Default to mysql
-// or you can just assign a pdo object via 
-\DbReader\Database::$pdo= $your_pdo_object;
+\DbReader\Database::settings([
+    'database' => "YOUR_DATABASE_NAME",
+    'username' => "YOUR_DATABASE_USERNAME",
+    'password' => "YOUR_DATABSE_PASSWORD",
+    // or you can just assign a pdo object via
+    // 'pdo'=> $your_pdo_object
+    //Below are optional columns
+    'manualRelations' => [
+        'tours.start_location' => 'locations.id',
+        'tours.end_location' => 'locations.id'
+    ],
+    'ignore' => [],
+    'protectedColumns' => ['id', 'created_at', 'updated_at'],
+    'files' => ['users.avatar']
+]);
+
 ```
 ### Database
 ```php

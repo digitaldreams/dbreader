@@ -155,7 +155,7 @@ class Table
                                     FROM  INFORMATION_SCHEMA.KEY_COLUMN_USAGE
                                     WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='$tableName' AND REFERENCED_TABLE_NAME IS NOT NULL";
         $relations = $this->db->query($sql)->fetchAll();
-        $relations = array_merge($relations, $this->makeManualRelation());
+        $relations = array_merge($relations, $this->makeManualBelongsToRelation());
 
         foreach ($relations as $rel) {
             $this->relations[$rel->COLUMN_NAME] = $rel;
@@ -176,7 +176,8 @@ class Table
                                     FROM  INFORMATION_SCHEMA.KEY_COLUMN_USAGE
                                     WHERE TABLE_SCHEMA='$dbName' AND REFERENCED_TABLE_NAME='$tableName' AND TABLE_NAME IS NOT NULL";
         $relations = $this->db->query($sql)->fetchAll();
-        foreach ($relations as $rel) {
+        $references = array_merge($relations, $this->makeManualHasManyRelation());
+        foreach ($references as $rel) {
             $this->references[] = $rel;
         }
         return $this;
@@ -201,15 +202,17 @@ class Table
     /**
      * Get columns from manual array of this table
      * @param $manualArr
+     * @param bool $useKey
      * @return array
      */
-    protected function manualArr($manualArr)
+    protected function manualArr($manualArr, $useKey = true)
     {
         $retArr = [];
         $relations = $manualArr;
         if (!empty($relations)) {
-            $retArr = array_filter($relations, function ($v, $k) {
-                if (substr_compare($k, $this->name(), 0, strlen($this->name())) === 0) {
+            $retArr = array_filter($relations, function ($v, $k) use ($useKey) {
+                $compareValue = $useKey === true ? $k : $v;
+                if (substr_compare($compareValue, $this->name(), 0, strlen($this->name())) === 0) {
                     return true;
                 }
             }, ARRAY_FILTER_USE_BOTH);
@@ -221,7 +224,7 @@ class Table
      * Make Foreign Key for Custom/Manual Column
      * @return array
      */
-    protected function makeManualRelation()
+    protected function makeManualBelongsToRelation()
     {
         $relArr = [];
         $relations = $this->manualArr(Database::$manualRelations);
@@ -237,6 +240,33 @@ class Table
             $foreign->COLUMN_NAME = $fkKeys[1];
             $foreign->CONSTRAINT_NAME = '';
             $foreign->REFERENCED_TABLE_NAME = $fkValues[0];
+            $foreign->REFERENCED_COLUMN_NAME = isset($fkKeys[1]) ? $fkKeys[1] : 'id';
+
+            $relArr[] = $foreign;
+        }
+        return $relArr;
+    }
+
+    /**
+     * Make Foreign Key for Custom/Manual Column
+     * @return array
+     */
+    protected function makeManualHasManyRelation()
+    {
+        $relArr = [];
+        $relations = $this->manualArr(Database::$manualRelations, false);
+        foreach ($relations as $key => $value) {
+            $foreign = new \stdClass();
+            $fkKeys = explode(".", $key);
+            $fkValues = explode(".", $value);
+
+            if (count($fkKeys) < 2) {
+                continue;
+            }
+            $foreign->TABLE_NAME = $fkKeys[0];
+            $foreign->COLUMN_NAME = $fkKeys[1];
+            $foreign->CONSTRAINT_NAME = '';
+            $foreign->REFERENCED_TABLE_NAME = $this->name();;
             $foreign->REFERENCED_COLUMN_NAME = isset($fkValues[1]) ? $fkValues[1] : 'id';
 
             $relArr[] = $foreign;

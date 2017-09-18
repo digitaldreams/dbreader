@@ -191,7 +191,9 @@ class Table
         $columns = [];
         foreach ($this->columns() as $name => $column) {
             $foreign = isset($this->relations[$name]) ? $this->relations[$name] : [];
-            $columns[] = new Column($column, $foreign, $this);
+            $files = $this->fileColumns();
+            $file = isset($files[$name]) ? $files[$name] : '';
+            $columns[] = (new Column($column, $foreign, $this))->setFile($file);
         }
         return $columns;
     }

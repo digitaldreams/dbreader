@@ -31,11 +31,26 @@ class Column
      */
     public $table;
 
+    /**
+     * @var
+     */
+    protected $file;
+
     public function __construct($data, $foreign = [], $table = '')
     {
         $this->data = $data;
         $this->foreign = $foreign;
         $this->table = is_object($table) ? $table : new Table($table);
+    }
+
+    /**
+     * @param $file
+     * @return $this
+     */
+    public function setFile($file)
+    {
+        $this->file = $file;
+        return $this;
     }
 
     /**
@@ -181,7 +196,7 @@ class Column
     public function isIgnore()
     {
         $columnName = $this->table->name() . "." . $this->name();
-        return in_array($columnName, config('laracrud.view.ignore'));
+        return in_array($columnName, Database::$ignore);
     }
 
     /**
@@ -190,7 +205,16 @@ class Column
      */
     public function isProtected()
     {
-        return in_array($this->name(), config('laracrud.model.protectedColumns'));
+        return in_array($this->name(), Database::$protectedColumns);
+    }
+
+    /**
+     * Check whether this column is file or not
+     * @return bool
+     */
+    public function isFile()
+    {
+        return !empty($this->file);
     }
 
     /**

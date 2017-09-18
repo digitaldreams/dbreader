@@ -155,11 +155,11 @@ class Table
                                     FROM  INFORMATION_SCHEMA.KEY_COLUMN_USAGE
                                     WHERE TABLE_SCHEMA='$dbName' AND TABLE_NAME='$tableName' AND REFERENCED_TABLE_NAME IS NOT NULL";
         $relations = $this->db->query($sql)->fetchAll();
+        $relations = array_merge($relations, $this->makeManualRelation());
 
         foreach ($relations as $rel) {
             $this->relations[$rel->COLUMN_NAME] = $rel;
         }
-
         return $this;
     }
 
@@ -176,11 +176,9 @@ class Table
                                     FROM  INFORMATION_SCHEMA.KEY_COLUMN_USAGE
                                     WHERE TABLE_SCHEMA='$dbName' AND REFERENCED_TABLE_NAME='$tableName' AND TABLE_NAME IS NOT NULL";
         $relations = $this->db->query($sql)->fetchAll();
-
         foreach ($relations as $rel) {
             $this->references[] = $rel;
         }
-
         return $this;
     }
 
@@ -199,12 +197,14 @@ class Table
     }
 
     /**
+     * Get columns from manual array of this table
+     * @param $manualArr
      * @return array
      */
-    protected function manualRelations()
+    protected function manualArr($manualArr)
     {
         $retArr = [];
-        $relations = Database::$manualRelations;
+        $relations = $manualArr;
         if (!empty($relations)) {
             $retArr = array_filter($relations, function ($v, $k) {
                 if (substr_compare($k, $this->name(), 0, strlen($this->name())) === 0) {
@@ -215,10 +215,14 @@ class Table
         return $retArr;
     }
 
+    /**
+     * Make Foreign Key for Custom/Manual Column
+     * @return array
+     */
     protected function makeManualRelation()
     {
         $relArr = [];
-        $relations = $this->manualRelations();
+        $relations = $this->manualArr(Database::$manualRelations);
         foreach ($relations as $key => $value) {
             $foreign = new \stdClass();
             $fkKeys = explode(".", $key);
@@ -227,13 +231,42 @@ class Table
             if (count($fkKeys) < 2) {
                 continue;
             }
+            $foreign->TABLE_NAME = $this->name();
             $foreign->COLUMN_NAME = $fkKeys[1];
+            $foreign->CONSTRAINT_NAME = '';
             $foreign->REFERENCED_TABLE_NAME = $fkValues[0];
             $foreign->REFERENCED_COLUMN_NAME = isset($fkValues[1]) ? $fkValues[1] : 'id';
 
             $relArr[] = $foreign;
         }
         return $relArr;
+    }
+
+    /**
+     * @return array
+     */
+    public function fileColumns()
+    {
+        $retArr = [];
+        $filesColumn = $this->manualArr(array_flip(Database::$files));
+        foreach (array_flip($filesColumn) as $value) {
+
+            $fileArr = explode(".", $value);
+            if (count($fileArr) < 2) {
+                continue;
+            }
+            $retArr[$fileArr[1]] = $fileArr[1];
+        }
+
+        return $retArr;
+    }
+
+    /**
+     *
+     */
+    public function hasFile()
+    {
+        return count($this->fileColumns()) > 0 ? true : false;
     }
 
     /**
@@ -247,7 +280,12 @@ class Table
     {
         if (isset($this->columns[$name])) {
             $foreign = isset($this->relations[$name]) ? $this->relations[$name] : [];
-            return new Column($this->columns[$name], $foreign, $this);
+            $files = $this->fileColumns();
+            $file = isset($files[$name]) ? $files[$name] : '';
+
+            $columnObj = new Column($this->columns[$name], $foreign, $this);
+            $columnObj->setFile($file);
+            return $columnObj;
         }
         throw new \Exception('Column ' . $name . ' does not exists in table ' . $this->name);
     }

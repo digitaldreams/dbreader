@@ -91,6 +91,22 @@ class Database
     ];
 
     /**
+     * Ignore able columns
+     * @var array
+     */
+    public static $ignore = [
+        //'tables.column'
+    ];
+    /**
+     * Protected columns. Each table has some common system columns
+     * that are used for tracking only like created_at, updated_at and deleted_at
+     * @var array
+     */
+    public static $protectedColumns = [
+        //'column'
+    ];
+
+    /**
      * All Relations
      * @var
      */

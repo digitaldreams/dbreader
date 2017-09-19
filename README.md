@@ -1,5 +1,11 @@
 For some kind of automation tools we need to know database constraints like tables, fields and its indexes. But its very hard and painful to get this information from directly database. This tool will make this task super simple.
-
+## Installation
+Add this line on your composer.json
+```javascript
+    "require":{
+        "digitaldream/dbreader":"~1.0"
+    }
+```
 ## Settings
 Set Database information on top of page. 
 ```php
